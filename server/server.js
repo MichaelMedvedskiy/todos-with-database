@@ -30,6 +30,16 @@ app.post('/todos', (req,res) => {
 
 });
 
+app.get('/todos',(req, res)=>{
+  Todo.find({}).then((todos)=>{
+    console.log('Here are all of the todos: ', todos);
+    res.send({todos});
+  }).catch((e)=>{
+    console.log('An error occured: ',e);
+    res.status(400).send(e);
+  });
+});
+
 app.listen(3000,()=>{
   console.log('App is up on port 3000');
 });
