@@ -7,7 +7,7 @@ var {mongoose} = require('./db/mongoose');
 
 var {User} = require('./models/user');
 
-var {Todo} = require('./models/Todo');
+var {Todo} = require('./models/todo');
 
 var app = express();
 var port = process.env.PORT || 3000;
