@@ -10,7 +10,7 @@ var {User} = require('./models/user');
 var {Todo} = require('./models/Todo');
 
 var app = express();
-
+var port = process.env.PORT || 3000;
 var getErrorObejct = (text)=>{
   return {errorText: text};
 };
@@ -60,8 +60,8 @@ app.get('/todos/:TodoId',(req, res)=>{
 
 });
 
-app.listen(3000,()=>{
-  console.log('App is up on port 3000');
+app.listen(port,()=>{
+  console.log(`App is up on port ${port}`);
 });
 
 module.exports = {app};
