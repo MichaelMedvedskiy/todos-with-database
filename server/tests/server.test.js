@@ -2,7 +2,7 @@ const expect = require('expect');
 const supertest = require('supertest');
 
 const {app} = require('./../server');
-const {Todo} = require('./../models/Todo');
+const {Todo} = require('./../models/todo');
 
 const {ObjectID} = require('mongodb');
 // beforeEach((done)=>{
@@ -85,50 +85,101 @@ const {ObjectID} = require('mongodb');
 // });
 
 
-describe('Testing solo finds by id',()=>{
-it('Should find a todo by id normaly', (done)=>{
+// describe('Testing solo finds by id',()=>{
+// it('Should find a todo by id normaly', (done)=>{
+//
+//   supertest(app)
+//   .get('/todos/5b4a10aea9ada88414e29b9d')
+//   .expect(200)
+//   .end((e, res)=>{
+//     if(e) return done(e);
+//     Todo.findById('5b4a10aea9ada88414e29b9d').then((todo)=>{
+//     //  res.body._id = new ObjectID(res.body._id);
+//       console.log(res.body);
+//       console.log('----------');
+//       console.log(todo);
+//       expect(res.body._id).toEqual(todo._id);
+//       done();
+//
+//     }).catch((e)=>{
+//           done(e);
+//     });
+//     });
+//
+// });
+//
+// it('Should return 404 for an incorrect request',(done)=>{
+//   console.log(`/todos/${(new ObjectID)}`);
+//   console.log(`/todos/${(new ObjectID)}`);
+//   console.log(`/todos/${(new ObjectID).toHexString()}`);
+//   supertest(app)
+//   .get(`/todos/${(new ObjectID).toHexString()}`)
+//   .expect(404)
+//   .end((e,res)=>{
+//     if(e) return done(e);
+//     done();
+//   });
+// });
+//
+// it('Should return 404 for an incorrect todo ID',(done)=>{
+//   supertest(app)
+//   .get('/todos/JopaNegra')
+//   .expect(404)
+//   .end((e,res)=>{
+//     if(e) return done(e);
+//     done();
+//   });
+// });
+//
+// });
 
-  supertest(app)
-  .get('/todos/5b4a10aea9ada88414e29b9d')
-  .expect(200)
-  .end((e, res)=>{
-    if(e) return done(e);
-    Todo.findById('5b4a10aea9ada88414e29b9d').then((todo)=>{
-    //  res.body._id = new ObjectID(res.body._id);
-      console.log(res.body);
-      console.log('----------');
-      console.log(todo);
-      expect(res.body._id).toEqual(todo._id);
+
+describe('Testing the delete route', ()=>{
+
+  it('Should delete a record', (done)=>{
+ var  theID = Todo.findOne({}).then((todo)=>{
+   expect(todo).toExist();
+
+  // if(!todo) done(new Error('There are no TODOS records!'));
+    supertest(app)
+    .delete(`/todos/${todo._id}`)
+    .expect(200)
+    .end((err,res)=>{
+    if(err) return done(err);
+      Todo.findById(res.body.todo._id).then((todo)=>{
+        expect(todo).toNotExist();
+        done();
+
+      }).catch((e)=>{
+        done(e);
+      });
+    });
+
+  }).catch((e)=>{
+    done(e);
+  });
+
+ });
+
+  it('Should return 404 if todo not found', (done)=>{
+      supertest(app)
+      .delete('/todos/5b48561af80e1448144c8c58')
+      .expect(404)
+      .end((error,response)=>{
+        if(error) done(error);
+        done();
+      });
+  });
+
+  it('Should return 404 if ObjectID is invalid', (done)=>{
+    supertest(app)
+    .delete('/todos/1337')
+    .expect(404)
+    .end((error,response)=>{
+      if(error) done(error);
       done();
-
-    }).catch((e)=>{
-          done(e);
     });
-    });
-
-});
-
-it('Should return 404 for an incorrect request',(done)=>{
-  console.log(`/todos/${(new ObjectID)}`);
-  console.log(`/todos/${(new ObjectID)}`);
-  console.log(`/todos/${(new ObjectID).toHexString()}`);
-  supertest(app)
-  .get(`/todos/${(new ObjectID).toHexString()}`)
-  .expect(404)
-  .end((e,res)=>{
-    if(e) return done(e);
-    done();
   });
-});
 
-it('Should return 404 for an incorrect todo ID',(done)=>{
-  supertest(app)
-  .get('/todos/JopaNegra')
-  .expect(404)
-  .end((e,res)=>{
-    if(e) return done(e);
-    done();
-  });
-});
 
 });

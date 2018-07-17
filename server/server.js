@@ -3,11 +3,14 @@ const bodyParser = require('body-parser');
 
 const {ObjectID} = require('mongodb');
 
+const _ = require('lodash');
 var {mongoose} = require('./db/mongoose');
 
 var {User} = require('./models/user');
 
 var {Todo} = require('./models/todo');
+
+
 
 var app = express();
 var port = process.env.PORT || 3000;
@@ -58,6 +61,48 @@ app.get('/todos/:TodoId',(req, res)=>{
     res.status(400).send({errorText: 'An error occured: ',e});
   });
 
+});
+
+
+app.delete('/todos/:_id',(req,res)=>{
+
+  var {_id} = req.params;
+//console.log('The ID IS::: ', _id);
+  if(!ObjectID.isValid(_id)) return res.status(404).send(getErrorObejct('The ID of a todo is incorrect'));
+
+  Todo.findByIdAndRemove(_id).then((todo)=>{
+    if(!todo) return res.status(404).send(getErrorObejct('No Todo with this ID was found'));
+
+    res.status(200).send({todo});
+  })
+  .catch((e)=>{
+    res.status(400).send(getErrorObejct(e));
+  });
+
+});
+
+app.patch('/todos/:_id',(req,res)=>{
+  var {_id} = req.params;
+  var body = _.pick(req.body,['text','completed']);
+
+  if(!ObjectID.isValid(_id)) return res.status(404).send(getErrorObejct('The ID of a todo is incorrect'));
+
+    if( body.completed){
+      body.completedAt = new Date().getTime();
+    }else{
+      body.completed = false;
+      body.completedAt = null;
+    }
+    Todo.findByIdAndUpdate(_id,{
+        $set: body
+    },{
+      new: true
+    }).then((todo)=>{
+      if(!todo) return res.status(404).send(getErrorObejct('The TODO with this ID does not exist'));
+      res.status(200).send({todo});
+    }).catch((e)=>{
+      res.status(400).send(e);
+    });
 });
 
 app.listen(port,()=>{
