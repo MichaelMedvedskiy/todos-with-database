@@ -134,52 +134,75 @@ const {ObjectID} = require('mongodb');
 // });
 
 
-describe('Testing the delete route', ()=>{
+// describe('Testing the delete route', ()=>{
+//
+//   it('Should delete a record', (done)=>{
+//  var  theID = Todo.findOne({}).then((todo)=>{
+//    expect(todo).toExist();
+//
+//   // if(!todo) done(new Error('There are no TODOS records!'));
+//     supertest(app)
+//     .delete(`/todos/${todo._id}`)
+//     .expect(200)
+//     .end((err,res)=>{
+//     if(err) return done(err);
+//       Todo.findById(res.body.todo._id).then((todo)=>{
+//         expect(todo).toNotExist();
+//         done();
+//
+//       }).catch((e)=>{
+//         done(e);
+//       });
+//     });
+//
+//   }).catch((e)=>{
+//     done(e);
+//   });
+//
+//  });
+//
+//   it('Should return 404 if todo not found', (done)=>{
+//       supertest(app)
+//       .delete('/todos/5b48561af80e1448144c8c58')
+//       .expect(404)
+//       .end((error,response)=>{
+//         if(error) done(error);
+//         done();
+//       });
+//   });
+//
+//   it('Should return 404 if ObjectID is invalid', (done)=>{
+//     supertest(app)
+//     .delete('/todos/1337')
+//     .expect(404)
+//     .end((error,response)=>{
+//       if(error) done(error);
+//       done();
+//     });
+//   });
+//
+//
+// });
 
-  it('Should delete a record', (done)=>{
- var  theID = Todo.findOne({}).then((todo)=>{
-   expect(todo).toExist();
+describe('PATCH /todos/:id test', ()=>{
+  it('Should modify a TODO with given ID',(done)=>{
 
-  // if(!todo) done(new Error('There are no TODOS records!'));
-    supertest(app)
-    .delete(`/todos/${todo._id}`)
-    .expect(200)
-    .end((err,res)=>{
-    if(err) return done(err);
-      Todo.findById(res.body.todo._id).then((todo)=>{
-        expect(todo).toNotExist();
+
+      supertest(app)
+      .patch('/todos/5b4e0f458152bfe422708a6b')
+      .send({
+
+	         completed: false
+
+      })
+      .expect(200)
+      .end((err, res)=>{
+        // if(err) return done(err);
+        //
+        // expect(res.body.todo.completedAt).toNotExist();
         done();
-
       }).catch((e)=>{
         done(e);
       });
-    });
-
-  }).catch((e)=>{
-    done(e);
   });
-
- });
-
-  it('Should return 404 if todo not found', (done)=>{
-      supertest(app)
-      .delete('/todos/5b48561af80e1448144c8c58')
-      .expect(404)
-      .end((error,response)=>{
-        if(error) done(error);
-        done();
-      });
-  });
-
-  it('Should return 404 if ObjectID is invalid', (done)=>{
-    supertest(app)
-    .delete('/todos/1337')
-    .expect(404)
-    .end((error,response)=>{
-      if(error) done(error);
-      done();
-    });
-  });
-
-
 });

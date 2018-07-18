@@ -82,7 +82,10 @@ app.delete('/todos/:_id',(req,res)=>{
 });
 
 app.patch('/todos/:_id',(req,res)=>{
+
   var {_id} = req.params;
+
+  console.log('HERE IS _id ',_id);
   var body = _.pick(req.body,['text','completed']);
 
   if(!ObjectID.isValid(_id)) return res.status(404).send(getErrorObejct('The ID of a todo is incorrect'));
@@ -98,6 +101,7 @@ app.patch('/todos/:_id',(req,res)=>{
     },{
       new: true
     }).then((todo)=>{
+      console.log(todo);
       if(!todo) return res.status(404).send(getErrorObejct('The TODO with this ID does not exist'));
       res.status(200).send({todo});
     }).catch((e)=>{
