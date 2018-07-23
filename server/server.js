@@ -1,13 +1,4 @@
-var env = process.env.NODE_ENV || 'development';
-
-console.log('env*****',env);
-if(env === 'development'){
-  process.env.PORT = 3000;
-  process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoApp';
-}else if (env === 'test'){
-  process.env.PORT = 3000;
-  process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoAppTestDB'
-}
+const config = require('./config/config');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -21,7 +12,7 @@ var {User} = require('./models/user');
 
 var {Todo} = require('./models/todo');
 
-
+var {authenticate} = require('./middleware/authenticate');
 
 
 
@@ -33,9 +24,15 @@ var getErrorObejct = (text)=>{
 
 app.use(bodyParser.json());
 
-app.post('/todos', (req,res) => {
+app.post('/todos', authenticate, (req,res) => {
 
-  var todo = new Todo(req.body);
+
+  var todo = new Todo(
+    {
+      text: req.body.text,
+      _creator: req.user._id
+    }
+  );
 
   todo.save().then((todo)=>{
     console.log('A todo HAS BEEN SAVED! Here it is: ',todo);
@@ -50,9 +47,11 @@ app.post('/todos', (req,res) => {
 
 });
 
-app.get('/todos',(req, res)=>{
+app.get('/todos', authenticate,(req, res)=>{
 
-  Todo.find({}).then((todos)=>{
+  Todo.find({
+    _creator: req.user._id
+  }).then((todos)=>{
     console.log('Here are all of the todos: ', todos);
     res.send({todos});
   }).catch((e)=>{
@@ -61,12 +60,15 @@ app.get('/todos',(req, res)=>{
   });
 });
 
-app.get('/todos/:TodoId',(req, res)=>{
+app.get('/todos/:TodoId',authenticate,(req, res)=>{
   var todoID = req.params.TodoId;
 //res.send(req.params.TodoId);
     if(!ObjectID.isValid(todoID)) return res.status(404).send(getErrorObejct('Id of the Todo is invalid.'));
 
-  Todo.findById(todoID).then((todo)=>{
+  Todo.findOne({
+    _id: todoID,
+    _creator: req.user._id
+  }).then((todo)=>{
     if(!todo) return res.status(404).send(getErrorObejct('Todo with this ID doesn\'t exist'));
     res.status(200).send(todo);
   })
@@ -77,13 +79,16 @@ app.get('/todos/:TodoId',(req, res)=>{
 });
 
 
-app.delete('/todos/:_id',(req,res)=>{
+app.delete('/todos/:_id',authenticate ,(req,res)=>{
 
   var {_id} = req.params;
 //console.log('The ID IS::: ', _id);
   if(!ObjectID.isValid(_id)) return res.status(404).send(getErrorObejct('The ID of a todo is incorrect'));
 
-  Todo.findByIdAndRemove(_id).then((todo)=>{
+  Todo.findOneAndRemove({
+    _id: _id,
+    _creator: req.user._id
+  }).then((todo)=>{
     if(!todo) return res.status(404).send(getErrorObejct('No Todo with this ID was found'));
 
     res.status(200).send({todo});
@@ -94,7 +99,7 @@ app.delete('/todos/:_id',(req,res)=>{
 
 });
 
-app.patch('/todos/:_id',(req,res)=>{
+app.patch('/todos/:_id',authenticate,(req,res)=>{
 
   var {_id} = req.params;
 
@@ -109,7 +114,7 @@ app.patch('/todos/:_id',(req,res)=>{
       body.completed = false;
       body.completedAt = null;
     }
-    Todo.findByIdAndUpdate(_id,{
+    Todo.findOneAndUpdate({_id,_creator: req.user._id},{
         $set: body
     },{
       new: true
@@ -120,6 +125,64 @@ app.patch('/todos/:_id',(req,res)=>{
     }).catch((e)=>{
       res.status(400).send(e);
     });
+});
+
+
+//Users app requests start here
+
+
+
+app.post('/users',(request,res)=>{
+
+  var user = new User(_.pick(request.body,['email','password']));
+
+  user.save().then((user)=>{
+    // console.log('A user HAS BEEN SAVED! Here it is: ',user);
+    // res.send(user);
+    return user.generateAuthToken();
+//  res.send({resp: 'Succ'});
+}).then((token)=>{
+    res.header('x-auth',token).send(user);
+}).catch((e)=>{
+
+    console.log('An error occured while saving a user: ', e);
+    res.status(400).send(e);
+  });
+
+
+});
+
+
+app.get('/users/me', authenticate,(req,res)=>{
+  res.send(req.user);
+});
+
+app.post('/users/login',(req, res)=>{
+  var body = _.pick(req.body,['email','password']);
+  // var email = req.body.email;
+  // var password = req.body.password;
+  User.findByCredentials(body.email,body.password)
+  .then((user)=>{
+    return user.generateAuthToken().then((token)=>{
+      res.header('x-auth',token).send(user);
+
+    });
+
+  })
+  .catch((e)=>{
+    res.status(400).send('No such user found');
+  });
+  //res.send(body);
+});
+
+app.delete('/users/me/token', authenticate, (req,res)=>{
+  req.user.removeToken(req.token)
+  .then(()=>{
+    res.status(200).send();
+  })
+  .catch((e)=>{
+    res.status(400).send();
+  });
 });
 
 app.listen(port,()=>{

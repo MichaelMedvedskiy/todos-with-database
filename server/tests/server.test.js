@@ -3,6 +3,7 @@ const supertest = require('supertest');
 
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
+const {User} = require('./../models/user');
 
 const {ObjectID} = require('mongodb');
 // beforeEach((done)=>{
@@ -184,25 +185,49 @@ const {ObjectID} = require('mongodb');
 //
 // });
 
-describe('PATCH /todos/:id test', ()=>{
-  it('Should modify a TODO with given ID',(done)=>{
+// describe('PATCH /todos/:id test', ()=>{
+//   it('Should modify a TODO with given ID',(done)=>{
+//
+//
+//       supertest(app)
+//       .patch('/todos/5b4e0f458152bfe422708a6b')
+//       .send({
+//
+// 	         completed: false
+//
+//       })
+//       .expect(200)
+//       .end((err, res)=>{
+//         // if(err) return done(err);
+//         //
+//         // expect(res.body.todo.completedAt).toNotExist();
+//         done();
+//       }).catch((e)=>{
+//         done(e);
+//       });
+//   });
+// });
 
 
-      supertest(app)
-      .patch('/todos/5b4e0f458152bfe422708a6b')
-      .send({
-
-	         completed: false
-
-      })
-      .expect(200)
-      .end((err, res)=>{
-        // if(err) return done(err);
-        //
-        // expect(res.body.todo.completedAt).toNotExist();
-        done();
-      }).catch((e)=>{
-        done(e);
-      });
+describe('DELETE /users/me/token',()=>{
+  var token = '';
+  it('should remove auth token on logged out',(done)=>{
+    supertest(app)
+    .delete('/users/me/token')
+    .set('x-auth', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1YjUxZGZhMGVkMDRiMDg4MDQ3YTM2YmUiLCJhY2Nlc3MiOiJBdXRoIiwiaWF0IjoxNTMyMTgxMjk4fQ.z1mP78oWE60C4enVL5dJe6o2LC4lAZficD7AasgB53I')
+    .expect(200)
+    .end((err,res)=>{
+      if(err) return done(err);
+        // res.user.removeToken(res.header('x-auth', res.token))
+          User.findByToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1YjUxZGZhMGVkMDRiMDg4MDQ3YTM2YmUiLCJhY2Nlc3MiOiJBdXRoIiwiaWF0IjoxNTMyMTgxMjk4fQ.z1mP78oWE60C4enVL5dJe6o2LC4lAZficD7AasgB53I').then((user)=>{
+            expect(user).toNotExist();
+            done();
+          })
+          .catch((e)=>{
+            console.log(e);
+            done(e);
+          });
+    });
   });
+
 });
